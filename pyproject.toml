@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "dexter-energy"
+version = "0.1.0"
+description = ""
+authors = ["A Havriushenko"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "dexter_energy"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+sklearn = "^0.0.post5"
+pandas = "^2.0.3"
+numpy = "^1.25.1"
+fastapi = "^0.100.0"
+pytest = "^7.4.0"
+requests = "^2.31.0"
+pydantic = "^2.0.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
