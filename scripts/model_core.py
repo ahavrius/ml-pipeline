@@ -7,32 +7,6 @@ from sklearn.metrics import mean_squared_error
 from scripts.model_config import random_forest_init_config
 from scripts.data_preparation import upload_data
 
-# Mock ML model class
-class Model:
-    def __init__(self, request):
-        self.model = None
-        self.request = request
-        self.features = None
-        self.target = None
-    
-    def prepare_data(self):
-        df = upload_data(self.request)
-        
-        self.features = generate_features(df)
-        self.target = generate_target(df)
-
-    def _train_step(self):
-        self.model = get_power_forecaster()
-        self.model.fit(self.features, self.target)
-    
-    def _predict_step(self):
-        # if not self.model:
-            # raise
-        self.predict = self.model.predict(self.features)
-    
-    def calculate_metrics(self):
-       rmse = compute_rmse(self.target, self.predict)
-
     def save_predict(self):
         # parquit file
         pass
@@ -49,20 +23,6 @@ class Model:
     def load_model(self, path):
         with open(f"{path}/model.pkl", 'rb') as file:
             self.model = pickle.load(file)
-
-    def predict_main(self):
-        self.prepare_data()
-        self.load_model()
-        self._predict_step()
-        self.save_predict()
-
-    def train_main(self):
-        self.prepare_data()
-        self._train_step()
-        self._predict_step()
-        self.calculate_metrics()
-        self.save_model()
-
 
 
 
