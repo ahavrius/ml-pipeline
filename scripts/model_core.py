@@ -1,31 +1,37 @@
 import numpy as np
 import pandas as pd
-import pickle
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 
+from mlflow.models import infer_signature
+import mlflow
+
 from scripts.model_config import random_forest_init_config
-from scripts.data_preparation import upload_data
-
-    def save_predict(self):
-        # parquit file
-        pass
-
-    def save_model(self, path):
-        # create folder if needed
-        # save parameters of api call
-        # the data trained ...  + model parameters
-        # save model itself with reproduceble name
-        # save calculated matrics
-        with open(f"{path}/model.pkl", 'wb') as file:
-            pickle.dump(self.model, file)
-
-    def load_model(self, path):
-        with open(f"{path}/model.pkl", 'rb') as file:
-            self.model = pickle.load(file)
 
 
+# import pickle
+        # with open(f"{path}/model.pkl", 'wb') as file:
+        #     pickle.dump(self.model, file)
 
+    # def load_model(self, path):
+    #     with open(f"{path}/model.pkl", 'rb') as file:
+    #         self.model = pickle.load(file)
+
+
+def train_model(features: pd.DataFrame, target: pd.Series, artifact_path: str):
+    with mlflow.start_run() as run:
+        # model creation
+        model = get_power_forecaster()
+        model.fit(X=features, y=target)
+        predict = model.predict(features)
+        rmse = compute_rmse(target.to_numpy(), predict)
+
+        # model logging
+        signature = infer_signature(features, predict)
+        mlflow.log_params(random_forest_init_config)
+        mlflow.log_metric("rmse", rmse)
+        mlflow.sklearn.log_model(model, artifact_path=artifact_path, signature=signature)
+    return run
 
 def generate_features(df: pd.DataFrame) -> pd.DataFrame:
     return (
@@ -37,7 +43,6 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
             day=lambda df: df.index.dayofyear.astype("float"),
         )
     )
-
 
 def generate_target(df: pd.DataFrame) -> pd.Series | None:
     column_name = "power"

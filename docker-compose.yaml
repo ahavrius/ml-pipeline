@@ -9,6 +9,7 @@ x-common-airflow:
   user: "${AIRFLOW_UID}:0"
   env_file:
     - ./env_files/airflow.env
+    - ./env_files/mlflow.env
   volumes:
     - ./dags:/opt/airflow/dags
     - ./data:/opt/airflow/data
@@ -27,9 +28,10 @@ services:
     ports:
         - "90:90"
     volumes:
-      - ./mlflow:/mlflow/artifacts
+      - ./mlflow:/opt/mlflow/artifacts
     env_file:
       - ./env_files/mlflow.env
+      - ./env_files/mlflow.postgres.env
     depends_on:
       postgresql:
         condition: service_healthy
@@ -45,7 +47,7 @@ services:
       interval: 5s
       retries: 5
     env_file:
-      - ./env_files/mlflow.env
+      - ./env_files/mlflow.postgres.env
 
   postgres:
     image: postgres:13
