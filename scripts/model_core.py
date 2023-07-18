@@ -4,8 +4,8 @@ import pickle
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 
-from model_config import random_forest_init_config
-from data_preparation import upload_data
+from scripts.model_config import random_forest_init_config
+from scripts.data_preparation import upload_data
 
 # Mock ML model class
 class Model:
