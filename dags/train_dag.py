@@ -1,66 +1,61 @@
-# from airflow.decorators import dag, task
-# from datetime import datetime
-# import pandas as pd
-# import numpy as np
-# import pickle
-# import logging
+import os
+from datetime import datetime
 
-# from scripts.data_preparation import upload_data, save_features, load_features
-# from scripts.model_core import generate_features, generate_target, get_power_forecaster, compute_rmse
+from airflow.decorators import dag, task
+from airflow.operators.python import get_current_context
 
-# todays_date = datetime.today().strftime('%Y/%m/%d')
-# training_output_path = f"training_output/{todays_date}"
+import mlflow
+from config.ml_dag_config import artifact_path, default_request, temp_path
+from scripts.data_preparation import load_features, save_features, upload_data
+from scripts.model_core import generate_features, generate_target, train_model
 
 
-# default_request = {
-#     "input_data": {
-#         "location_path": "data/solar-dataset.parquet",
-#         "location_type": "local"
-#     },
-#     "time_period": {
-#         "start_datetime": None,
-#         "end_datetime": None
-#     }
-# }
+@dag(schedule="0 8 * * Mon", start_date=datetime(2023, 7, 10), params=default_request)
+def train_dag():
+    @task()
+    def get_data(**context):
+        return upload_data(
+            context["params"]["input_data"], context["params"]["time_period"]
+        )
+
+    @task()
+    def featurize(data):
+        features = generate_features(data)
+        target = generate_target(data)
+
+        save_features(features, target, temp_path)
+        return
+
+    @task()
+    def train(arg):
+        context = get_current_context()
+
+        mlflow.set_tracking_uri(os.getenv("MLFLOW_REMOTE_TRACKING_URI"))
+        run_date = datetime.today().strftime("%Y-%m-%d")
+
+        if not mlflow.get_experiment_by_name(f"run_{run_date()}"):
+            mlflow.create_experiment(f"run_{run_date()}")
+        mlflow.set_experiment(f"run_{run_date()}")
+
+        features, target = load_features(temp_path)
+        run = train_model(
+            features, target, artifact_path, context["params"]["model"]["param"]
+        )
+        return run.info.run_id
+
+    @task()
+    def register_model(ml_run_id):
+        context = get_current_context()
+
+        mlflow.set_tracking_uri(os.getenv("MLFLOW_REMOTE_TRACKING_URI"))
+        model_uri = "runs:/{run_id}/{artifact_path}".format(
+            run_id=ml_run_id, artifact_path=artifact_path
+        )
+        mlflow.register_model(
+            model_uri=model_uri, name=context["params"]["model"]["name"]
+        )
+
+    register_model(train(featurize(get_data())))
 
 
-# @dag(schedule='@daily',
-#      start_date=datetime(2023, 7, 10),
-#      params=default_request)
-# def train_dag():
-
-#     @task()
-#     def get_data(**context):
-#         return upload_data(**context["params"])
-
-#     @task()
-#     def featurize(data):
-#         features = generate_features(data)
-#         target = generate_target(data)
-
-#         save_features(features, target, training_output_path)
-#         return
-
-#     @task()
-#     def train_model(arg):
-#         features, target = load_features(training_output_path)
-#         model = get_power_forecaster()
-#         model.fit(X=features, y=target)
-#         predict = model.predict(features)
-
-#         with open(f"{training_output_path}/model.pkl", 'wb') as file:
-#             pickle.dump(model, file)
-
-#         return predict.tolist()
-    
-#     @task()
-#     def calculate_metrics(predict):
-#         target = pd.read_parquet(f"{training_output_path}/target.parquet")
-#         rmse = compute_rmse(target.to_numpy(), np.array(predict, dtype='float32')
-# )
-#         # save score ?
-#         logging.INFO(f"rmse score: {rmse}")
-    
-#     calculate_metrics(train_model(featurize(get_data())))
-
-# train = train_dag()    
+train = train_dag()
