@@ -9,9 +9,3 @@ WORKDIR /opt/airflow
 COPY requirements.txt .
 
 RUN pip install -r requirements.txt
-
-# RUN pip install "poetry==$POETRY_VERSION"
-
-# COPY poetry.lock pyproject.toml ./
-
-# RUN poetry install --only main --no-interaction  --no-root

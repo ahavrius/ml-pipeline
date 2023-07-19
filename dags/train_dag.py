@@ -1,25 +1,26 @@
 import os
 from datetime import datetime
+import pandas as pd
 
 from airflow.decorators import dag, task
 from airflow.operators.python import get_current_context
 
 import mlflow
 from config.ml_dag_config import artifact_path, default_request, temp_path
-from scripts.data_preparation import load_features, save_features, upload_data
-from scripts.model_core import generate_features, generate_target, train_model
+from data_func import load_features, save_features, upload_data
+from model_func import generate_features, generate_target, train_model
 
 
 @dag(schedule="0 8 * * Mon", start_date=datetime(2023, 7, 10), params=default_request)
 def train_dag():
     @task()
-    def get_data(**context):
+    def get_data(**context: dict) -> pd.DataFrame:
         return upload_data(
             context["params"]["input_data"], context["params"]["time_period"]
         )
 
     @task()
-    def featurize(data):
+    def featurize(data: pd.DataFrame):
         features = generate_features(data)
         target = generate_target(data)
 
@@ -27,7 +28,7 @@ def train_dag():
         return
 
     @task()
-    def train(arg):
+    def train(_) -> str:
         context = get_current_context()
 
         mlflow.set_tracking_uri(os.getenv("MLFLOW_REMOTE_TRACKING_URI"))
@@ -44,7 +45,7 @@ def train_dag():
         return run.info.run_id
 
     @task()
-    def register_model(ml_run_id):
+    def register_model(ml_run_id: str):
         context = get_current_context()
 
         mlflow.set_tracking_uri(os.getenv("MLFLOW_REMOTE_TRACKING_URI"))

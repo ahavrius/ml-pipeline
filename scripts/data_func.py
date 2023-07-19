@@ -37,7 +37,9 @@ def save_features(features, target, path: str):
         pd.DataFrame(target).to_parquet(f"{path}/target.parquet")
 
 
-def load_features(path: str, is_target=True):
+def load_features(
+    path: str, is_target=True
+) -> tuple[pd.DataFrame, pd.DataFrame | None]:
     features = pd.read_parquet(f"{path}/features.parquet")
     if is_target:
         target = pd.read_parquet(f"{path}/target.parquet")

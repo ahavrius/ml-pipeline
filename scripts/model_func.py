@@ -1,22 +1,21 @@
 import numpy as np
 import pandas as pd
 import yaml
+import mlflow
 from mlflow.models import infer_signature
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 
-import mlflow
-
 
 def train_model(
     features: pd.DataFrame, target: pd.Series, artifact_path: str, param: dict
-):
-    with mlflow.start_run() as run:
-        # update model parameters
-        with open("config/model_config.yml", "r") as file:
-            default_param = yaml.safe_load(file)
-        model_param = {**default_param["random_forest"], **param}
+) -> mlflow.ActiveRun:
+    # update model parameters
+    with open("scripts/config/model_config.yml", "r") as file:
+        default_param = yaml.safe_load(file)
+    model_param = {**default_param["random_forest"], **param}
 
+    with mlflow.start_run() as run:
         # model creation
         model = get_power_forecaster(model_param)
         model.fit(X=features, y=target)

@@ -4,28 +4,27 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 from airflow.decorators import dag, task
 from airflow.operators.python import get_current_context
-
 import mlflow
-from config.ml_dag_config import default_request, temp_path
 from mlflow import MlflowClient
-from scripts.data_preparation import (
+
+from config.ml_dag_config import default_request, temp_path
+from data_func import (
     load_features,
     save_features,
     upload_data,
     write_data,
 )
-from scripts.model_core import generate_features
+from model_func import generate_features
 
 
 @dag(
-    schedule="0 * * * *",
-    # @dag(schedule='0 9 * * *',
+    schedule="0 9 * * *",
     start_date=datetime(2023, 7, 10),
     params=default_request,
 )
 def forecast_dag():
     @task()
-    def get_data(**context):
+    def get_data(**context: dict) -> pd.DataFrame:
         yesterday = date.today() - timedelta(days=1)
 
         time_period = {
@@ -36,13 +35,13 @@ def forecast_dag():
         return upload_data(context["params"]["input_data"], updated_time_period)
 
     @task()
-    def featurize(data):
+    def featurize(data: pd.DataFrame):
         features = generate_features(data)
         save_features(features, None, temp_path)
         return
 
     @task()
-    def fetch_model(**context):
+    def fetch_model(**context: dict) -> str:
         mlflow.set_tracking_uri(os.getenv("MLFLOW_REMOTE_TRACKING_URI"))
 
         client = MlflowClient()
@@ -53,7 +52,7 @@ def forecast_dag():
         return model_uri
 
     @task()
-    def predict(_, model_uri):
+    def predict(_, model_uri: str) -> list:
         mlflow.set_tracking_uri(os.getenv("MLFLOW_REMOTE_TRACKING_URI"))
         model = mlflow.sklearn.load_model(model_uri)
 
@@ -62,7 +61,7 @@ def forecast_dag():
         return predict.tolist()
 
     @task()
-    def upload_predict(predict):
+    def upload_predict(predict: list):
         context = get_current_context()
         write_data(
             pd.DataFrame(predict, columns=["solar_predict"]),
