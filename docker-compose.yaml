@@ -6,7 +6,7 @@ x-common-airflow:
   build:
     context: .
     dockerfile: ./docker/Dockerfile.airflow
-  user: "${AIRFLOW_UID}:0"
+  user: "0:0"
   env_file:
     - ./env_files/airflow.env
     - ./env_files/mlflow.env
@@ -36,6 +36,12 @@ services:
       postgresql:
         condition: service_healthy
     command: bash /tmp/start_mlflow.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://0.0.0.0:90"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   postgresql:
     image: postgres:13
@@ -70,6 +76,12 @@ services:
       - "8793:8793"
     depends_on:
       - airflow-init
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://0.0.0.0:8793"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   webserver:
     <<: *common-airflow
@@ -94,5 +106,5 @@ services:
       - -c
       - |
         mkdir -p /sources/logs /sources/dags /sources/plugins
-        chown -R "${AIRFLOW_UID}:0" /sources/{logs,dags,plugins}
+        chown -R "0:0" /sources/{logs,dags,plugins}
         exec /entrypoint airflow version
