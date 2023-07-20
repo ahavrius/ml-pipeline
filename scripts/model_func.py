@@ -10,10 +10,11 @@ from sklearn.metrics import mean_squared_error
 def train_model(
     features: pd.DataFrame, target: pd.Series, artifact_path: str, param: dict
 ) -> mlflow.ActiveRun:
+    
     # update model parameters
     with open("scripts/config/model_config.yml", "r") as file:
         default_param = yaml.safe_load(file)
-    model_param = {**default_param["random_forest"], **param}
+    model_param = {**default_param["random_forest"], **param["model"]["param"]}
 
     with mlflow.start_run() as run:
         # model creation
@@ -24,6 +25,11 @@ def train_model(
 
         # model logging
         signature = infer_signature(features, predict)
+        dataset = mlflow.data.from_pandas(
+            features,
+            source=param["input_data"]["location_path"]
+        )
+        mlflow.log_input(dataset, context="training")
         mlflow.log_params(model_param)
         mlflow.log_metric("rmse", rmse)
         mlflow.sklearn.log_model(

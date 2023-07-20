@@ -1,20 +1,19 @@
 import os
 from datetime import date, datetime, timedelta
-
 import pandas as pd
-from airflow.decorators import dag, task
-from airflow.operators.python import get_current_context
 import mlflow
 from mlflow import MlflowClient
+from airflow.decorators import dag, task
+from airflow.operators.python import get_current_context
 
-from config.ml_dag_config import default_request, temp_path
-from data_func import (
+from scripts.config.ml_dag_config import default_request, temp_path
+from scripts.data_func import (
     load_features,
     save_features,
     upload_data,
     write_data,
 )
-from model_func import generate_features
+from scripts.model_func import generate_features
 
 
 @dag(
@@ -37,7 +36,7 @@ def forecast_dag():
     @task()
     def featurize(data: pd.DataFrame):
         features = generate_features(data)
-        save_features(features, None, temp_path)
+        save_features(features, None, temp_path())
         return
 
     @task()
@@ -56,7 +55,7 @@ def forecast_dag():
         mlflow.set_tracking_uri(os.getenv("MLFLOW_REMOTE_TRACKING_URI"))
         model = mlflow.sklearn.load_model(model_uri)
 
-        features, _ = load_features(temp_path, is_target=False)
+        features, _ = load_features(temp_path(), is_target=False)
         predict = model.predict(features)
         return predict.tolist()
 
