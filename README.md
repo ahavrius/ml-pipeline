@@ -20,7 +20,7 @@ cd dexter-energy
 Use Docker Compose to build and run the containers defined in the ```docker-compose.yml``` file.
 
 ```bash
-docker-compose up -d --build
+docker-compose up -d
 ```
 
 To stop Docker containers use the following command.
@@ -47,6 +47,3 @@ Here you can observe experiments and stored models.
 You can find `.env` files in folder `env_files/` to configure docker environment.
 
 To adjust default model and airflow dags parameters you can edit files in `scripts/config/`.
-
-
-

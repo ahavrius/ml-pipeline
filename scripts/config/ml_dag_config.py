@@ -11,7 +11,7 @@ artifact_path = os.getenv("MLFLOW_ARTIFACT_PATH")
 
 default_request = {
     "input_data": {
-        "location_path": "gs://dexter-public/solar-dataset.pq",
+        "location_path": "data/solar-dataset.parquet",
         "location_type": "local",
     },
     "time_period": {"start_datetime": None, "end_datetime": None},
@@ -21,4 +21,3 @@ default_request = {
         "location_type": "local",
     },
 }
-

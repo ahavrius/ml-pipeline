@@ -4,13 +4,12 @@ import pandas as pd
 import mlflow
 from mlflow import MlflowClient
 from airflow.decorators import dag, task
-from airflow.operators.python import get_current_context
 
 from scripts.config.ml_dag_config import default_request, temp_path
 from scripts.data_func import (
     load_features,
     save_features,
-    upload_data,
+    load_data,
     write_data,
 )
 from scripts.model_func import generate_features
@@ -31,7 +30,7 @@ def forecast_dag():
             "end_datetime": yesterday.strftime("2018-07-%dT23:45:00.000Z"),
         }
         updated_time_period = {**time_period, **context["params"]["time_period"]}
-        return upload_data(context["params"]["input_data"], updated_time_period)
+        return load_data(context["params"]["input_data"], updated_time_period)
 
     @task()
     def featurize(data: pd.DataFrame):
@@ -60,8 +59,7 @@ def forecast_dag():
         return predict.tolist()
 
     @task()
-    def upload_predict(predict: list):
-        context = get_current_context()
+    def upload_predict(predict: list, **context: dict):
         write_data(
             pd.DataFrame(predict, columns=["solar_predict"]),
             **context["params"]["output_data"],
