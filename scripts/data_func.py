@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 
 
-def upload_data(input_data, time_period) -> pd.DataFrame:
+def load_data(input_data, time_period) -> pd.DataFrame:
     df = read_data(**input_data)
     df = crop_data_span(df, **time_period)
 
