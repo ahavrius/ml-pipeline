@@ -43,6 +43,29 @@ services:
       retries: 3
       start_period: 10s
 
+  # monitor:
+  #   build:
+  #     context: .
+  #     dockerfile: ./docker/Dockerfile.monitor
+  #   container_name: monitor
+  #   ports:
+  #       - "100:100"
+  #   # volumes:
+  #   #   - ./mlflow:/opt/mlflow/artifacts
+  #   env_file:
+  #     - ./env_files/mlflow.env
+  #     - ./env_files/mlflow.postgres.env
+  #   depends_on:
+  #     postgresql:
+  #       condition: service_healthy
+  #   command: bash /tmp/start_monitor.sh
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://0.0.0.0:100"]
+  #     interval: 10s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 10s
+
   postgresql:
     image: postgres:13
     container_name: postgresql
