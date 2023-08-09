@@ -12,7 +12,7 @@
 
 ```bash
 git clone <repository_url>
-cd dexter-energy
+cd <repository_name>
 ```
 
 ### 2. Build and Run with Docker Compose
