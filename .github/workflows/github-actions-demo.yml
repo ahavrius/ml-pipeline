@@ -3,12 +3,18 @@ run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 on: [push]
 jobs:
   Explore-GitHub-Actions:
+    permissions:
+        checks: write
+        pull-requests: write
+        contents: read
     runs-on: ubuntu-latest
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - name:  Smell My PR
-        uses: smelly-python/smell-my-pr@v1.0.0
-
+      - uses: actions/checkout@v3
+      - uses: smelly-python/smell-my-pr@main
+        with: 
+            github-token: ${{ github.token }}
+            command: pipenv run smelly-python -d src
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
